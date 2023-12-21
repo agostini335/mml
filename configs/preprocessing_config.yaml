@@ -2,11 +2,6 @@ root_dir: "/cluster/work/vogtlab/Projects/mimic-cxr/physionet.org/files/mimic-cx
 res_dir: "/cluster/work/vogtlab/Group/anandrea/mimic-cxr-preprocessed/"
 
 
-#class_names: ['Atelectasis', 'Cardiomegaly',
-#               'Consolidation', 'Edema', 'Enlarged Cardiomediastinum', 'Fracture',
-#               'Lung Lesion', 'Lung Opacity', 'No Finding', 'Pleural Effusion',
-#               'Pleural Other', 'Pneumonia', 'Pneumothorax', 'Support Devices']
-
 class_names: ['Pneumonia']
 
 trans_resize: 224

@@ -8,10 +8,11 @@ import logging
 from omegaconf import DictConfig, OmegaConf
 
 
-@hydra.main(version_base=None, config_path='configs', config_name='preprocessing_config')
+@hydra.main(version_base=None, config_path='../configs', config_name='preprocessing_config')
 def create_dataset(cfg: DictConfig):
     # logging initialization
-    logging.basicConfig(filename=cfg.logging.filename, level=logging.ERROR)
+    logging.basicConfig(filename=cfg.logging.filename, format='%(asctime)s %(levelname)-8s %(message)s',
+                        datefmt='%d-%m-%Y %H:%M:%S', level=logging.INFO)
 
     # data paths initialization
     root_dir = cfg.root_dir
@@ -94,3 +95,18 @@ def create_dataset(cfg: DictConfig):
 
     # save dataframe as csv
     df_filtered.to_csv(res_dir + 'meta_data.csv', index=False)
+
+
+def test_output():
+    logging.basicConfig(filename="test.log", level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s',
+                        datefmt='%d-%m-%Y %H:%M:%S')
+    logging.error("this is a test error")
+    logging.info("this is a test info")
+
+
+def main():
+    create_dataset()
+
+
+if __name__ == "__main__":
+    main()
