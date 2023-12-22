@@ -1,17 +1,19 @@
 import numpy as np
 import pandas as pd
-import PIL
+from PIL import Image, ImageOps
 from tqdm import tqdm
 import zipfile
 import hydra
 import logging
+import os
+from datetime import datetime
 from omegaconf import DictConfig, OmegaConf
 
 
 @hydra.main(version_base=None, config_path='../configs', config_name='preprocessing_config')
 def create_dataset(cfg: DictConfig):
     # logging initialization
-    logging.basicConfig(filename=cfg.logging.filename, format='%(asctime)s %(levelname)-8s %(message)s',
+    logging.basicConfig(filename="log/"+str(datetime.now())+cfg.logging.filename, format='%(asctime)s %(levelname)-8s %(message)s',
                         datefmt='%d-%m-%Y %H:%M:%S', level=logging.INFO)
 
     # data paths initialization
@@ -57,10 +59,9 @@ def create_dataset(cfg: DictConfig):
     with zipfile.ZipFile(data_dir, 'r') as z:
         # iterate through files
         for filename in tqdm(df['path']):
-
             # read image
             try:
-                img = PIL.Image.open(z.open(filename)).convert('RGB')
+                img = Image.open(z.open(filename)).convert('RGB')
             except:
                 # drop the row
                 print(filename)
@@ -68,7 +69,7 @@ def create_dataset(cfg: DictConfig):
                 # logging
                 logging.info(f"dropped {filename}")
                 continue
-
+            
             # cut depending on the size
             width, height = img.size
             r_min = max(0, (height - width) / 2)
@@ -79,7 +80,7 @@ def create_dataset(cfg: DictConfig):
 
             # hist equalize and reshape
             img = img.resize((transResize, transResize))
-            img = PIL.ImageOps.equalize(img)
+            img = ImageOps.equalize(img)
             # TODO check if we can use RGB
             img = img.convert('L')
 
@@ -88,6 +89,13 @@ def create_dataset(cfg: DictConfig):
 
             # increment
             cnt += 1
+    
+  
+    # checking if the directory exist or not. 
+    if not os.path.exists(res_dir): 
+      
+        # if the directory is not present then create it. 
+        os.makedirs(res_dir) 
 
     # save
     img_mat = img_mat[0:cnt, :, :]
