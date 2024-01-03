@@ -62,7 +62,7 @@ def train_test_split_CXR(cfg: DictConfig):
     if cfg.splitting.method != 'random':
         raise NotImplementedError('Only random split is supported at the moment')
 
-    # TODO set universal seed
+    #TODO set universal seed
     np.random.seed(cfg.seed)
 
     img_mat = np.load(os.path.join(cfg.root_dir, "files_" + str(cfg.trans_resize) + ".npy"))
@@ -71,6 +71,16 @@ def train_test_split_CXR(cfg: DictConfig):
     print('Root dir: ', cfg.root_dir)
     print('Image matrix shape: ', img_mat.shape)
     print('Number of metadata rows: ', len(df))
+
+    if cfg.uncertain_values == 'exclude':
+        print("Dropping readings with uncertain values in selected class names")
+
+        conditions = [(df[col] == -1) for col in cfg.class_names]
+        combined_condition = pd.concat(conditions, axis=1).any(axis=1)
+        df.drop(df[combined_condition].index, inplace=True)
+
+        print('Number of filtered metadata rows: ', len(df))
+
 
     # patient id split
     patient_id = sorted(list(set(df['subject_id'])))
@@ -90,11 +100,15 @@ def train_test_split_CXR(cfg: DictConfig):
 
     for split in splits:
         df_split = df[df['subject_id'].isin(splits[split])]
-        df_split = df_split.sort_values(by=['subject_id'])
-        split_list = sorted(df.index[df['dicom_id'].isin(df_split['dicom_id'])].tolist())
+        df_split = df_split.sort_values(by=['subject_id']).reset_index()
+
         split_dicom = df_split['dicom_id']
         split_label = df_split[cfg.class_names]
+
+        split_list = sorted(df.index[df['dicom_id'].isin(df_split['dicom_id'])].tolist())
         split_images = img_mat[split_list, :, :]
+
+
         print('Number of images in {} set: '.format(split), len(df_split))
         out_dict[split] = {'ids': split_list, 'images': split_images, 'labels': split_label, 'dicom_ids': split_dicom}
 

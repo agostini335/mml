@@ -1,6 +1,6 @@
 root_dir: "/Users/ago/PycharmProjects/mml/data/mimic-cxr-preprocessed"
 
-class_names: ['Pneumonia']
+class_names: ['Support Devices']
 trans_resize: 224
 view_position: 'PA'
 
@@ -11,3 +11,5 @@ splitting:
   test_val_split: 0.5
 
 seed: 42
+
+uncertain_values: 'exclude'

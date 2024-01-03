@@ -23,11 +23,6 @@ def create_dataset(cfg: DictConfig):
     data_dir = root_dir + 'files.zip'
     labels = pd.read_csv(root_dir + 'mimic-cxr-2.0.0-chexpert.csv')
 
-    # dropping readings with uncertain values in selected class names
-    conditions = [(labels[col] == -1) for col in class_names]
-    combined_condition = pd.concat(conditions, axis=1).any(axis=1)
-    labels.drop(labels[combined_condition].index, inplace=True)
-
     # meta data loading
     df = pd.read_csv(root_dir + 'mimic-cxr-2.0.0-metadata.csv')
     df = df[['dicom_id', 'subject_id', 'study_id', 'ViewPosition']]
