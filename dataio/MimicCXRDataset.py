@@ -4,55 +4,46 @@ from omegaconf import DictConfig, OmegaConf
 import hydra
 import numpy as np
 import pandas as pd
+
 from PIL import Image
-# from torch.utils.data import DataLoader, Dataset
-# from torchvision import transforms
+from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
 from sklearn.model_selection import train_test_split
 
-'''
-class DatasetGenerator(Dataset):
-    def __init__(self, imgs, img_list, label_list, transform):
 
-        self.img_index = []
-        self.listImageAttributes = []
+class CXRDataset(Dataset):
+
+    def __init__(self, label_name, labels_df, images, transform=None, target_transform=None):
+        self.labels_df = labels_df
+        self.label_name = label_name
+        self.images = images
         self.transform = transform
-        self.imgs = imgs
+        self.target_transform = target_transform
 
-        # Iterate over images and retrieve labels and protected attributes
-        for i in range(len(img_list)):
+        # create labels
+        self.labels = self._create_labels()
 
-            row = label_list.iloc[i]
-            imageLabel = row['No Finding']
-            imageAttr = np.array(row[row.index != 'No Finding'])
-            imageAttr[np.isnan(imageAttr)] = 0
-
-            if imageLabel == 1:
-                imgLabel = 0
-            else:
-                imgLabel = 1
-
-            self.img_index.append(imgLabel)
-            self.listImageAttributes.append(imageAttr)
-
-    def __getitem__(self, index):
-        # Gets an element of the dataset
-
-        imageData = Image.fromarray(self.imgs[index]).convert('RGB')
-
-        image_label = self.img_index[index]
-
-        image_attr = self.listImageAttributes[index]
-
-        if self.transform != None: imageData = self.transform(imageData)
-
-        # Return a tuple of images, labels, and protected attributes
-        return {'img_code': index, 'labels': image_label,
-                'features': imageData, 'concepts': image_attr}
+    def _create_labels(self):
+        # create labels based on a binary column
+        labels = self.labels_df[self.label_name]
+        labels = labels.fillna(0)
+        # assert that values are either 0 or 1
+        assert all((labels == 0) | (labels == 1))
+        return labels
 
     def __len__(self):
+        return len(self.labels_df)
 
-        return len(self.img_index)
-'''
+    def __getitem__(self, idx):
+        image = Image.fromarray(self.images[idx]).convert('RGB')
+        label = self.labels.iloc[idx]
+
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            label = self.target_transform(label)
+
+        return image, label
 
 
 @hydra.main(version_base=None, config_path='../configs', config_name='dataset_config.yaml')
@@ -62,7 +53,7 @@ def train_test_split_CXR(cfg: DictConfig):
     if cfg.splitting.method != 'random':
         raise NotImplementedError('Only random split is supported at the moment')
 
-    #TODO set universal seed
+    # TODO set universal seed
     np.random.seed(cfg.seed)
 
     img_mat = np.load(os.path.join(cfg.root_dir, "files_" + str(cfg.trans_resize) + ".npy"))
@@ -80,7 +71,6 @@ def train_test_split_CXR(cfg: DictConfig):
         df.drop(df[combined_condition].index, inplace=True)
 
         print('Number of filtered metadata rows: ', len(df))
-
 
     # patient id split
     patient_id = sorted(list(set(df['subject_id'])))
@@ -108,13 +98,13 @@ def train_test_split_CXR(cfg: DictConfig):
         split_list = sorted(df.index[df['dicom_id'].isin(df_split['dicom_id'])].tolist())
         split_images = img_mat[split_list, :, :]
 
-
         print('Number of images in {} set: '.format(split), len(df_split))
         out_dict[split] = {'ids': split_list, 'images': split_images, 'labels': split_label, 'dicom_ids': split_dicom}
 
     return out_dict['train'], out_dict['val'], out_dict['test']
 
 
+'''
 def get_CXR_dataloaders(dataset, root_dir, train_val_split=0.6, test_val_split=0.5, seed=42):
     """Returns a dictionary of data loaders for the MIMIC-CXR dataset, for the training, validation, and test sets."""
 
@@ -154,3 +144,4 @@ def get_CXR_dataloaders(dataset, root_dir, train_val_split=0.6, test_val_split=0
                                                                transform=test_transform)}
 
     return image_datasets['train'], image_datasets['val'], image_datasets['test']
+'''

@@ -1,6 +1,6 @@
 root_dir: "/Users/ago/PycharmProjects/mml/data/mimic-cxr-preprocessed"
 
-class_names: ['Support Devices']
+class_names: ['No Finding']
 trans_resize: 224
 view_position: 'PA'
 
