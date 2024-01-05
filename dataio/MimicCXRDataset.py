@@ -7,6 +7,7 @@ import pandas as pd
 
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
+import torch
 from torchvision import transforms
 from sklearn.model_selection import train_test_split
 
@@ -35,8 +36,18 @@ class CXRDataset(Dataset):
         return len(self.labels_df)
 
     def __getitem__(self, idx):
+
         image = Image.fromarray(self.images[idx]).convert('RGB')
-        label = self.labels.iloc[idx]
+
+        label_values = self.labels.iloc[idx]
+
+        # TODO CHECK THIS
+        # If it's a single float64 value, convert it to a numpy array
+        if isinstance(label_values, np.float64):
+            label_values = np.array([label_values])
+
+        # create a torch tensor from the numpy array
+        label = torch.from_numpy(label_values.astype(int)).float()
 
         if self.transform:
             image = self.transform(image)
@@ -44,6 +55,7 @@ class CXRDataset(Dataset):
             label = self.target_transform(label)
 
         return image, label
+
 
 
 @hydra.main(version_base=None, config_path='../configs', config_name='dataset_config.yaml')
