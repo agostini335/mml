@@ -1,6 +1,6 @@
-root_dir: "/Users/ago/PycharmProjects/mml/data/mimic-cxr-preprocessed"
+root_dir: "/local/home/anandrea/mml/data/mimic-cxr-preprocessed"
 
-class_names: ['No Finding']
+class_names: ['Pneumonia']
 trans_resize: 224
 view_position: 'PA'
 

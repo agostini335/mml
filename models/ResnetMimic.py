@@ -10,7 +10,7 @@ from sklearn.metrics import roc_auc_score
 class ResnetMimic(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.lr = 0.005
+        self.lr = 0.0000005
         self.pretrained = False
         self.model = resnet18(pretrained=self.pretrained)
         self.model.fc = nn.Linear(512, out_features=1, bias=True)

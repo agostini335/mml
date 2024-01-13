@@ -49,7 +49,7 @@ if __name__ == '__main__':
     wandb.init(
         project="mimic-mml",
         group="experiment_1",
-        job_type='pneumonia',
+        job_type='pneumonia_transform',
         mode="online",
     )
     project_name = 'Resnet18_mimic'
