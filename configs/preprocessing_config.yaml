@@ -1,11 +1,7 @@
 root_dir: "/cluster/work/vogtlab/Projects/mimic-cxr/physionet.org/files/mimic-cxr-jpg/2.0.0/"
-res_dir: "/cluster/work/vogtlab/Group/anandrea/mimic-cxr-preprocessed/"
-
-class_names: ['Pneumonia']
+res_dir: "/cluster/work/vogtlab/Group/anandrea/mimic-cxr-preprocessed-16012024/"
 
 trans_resize: 224
-
-view_position: 'PA'
 
 logging:
   filename: 'preprocessing.log'

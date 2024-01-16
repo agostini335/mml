@@ -13,13 +13,13 @@ from omegaconf import DictConfig, OmegaConf
 @hydra.main(version_base=None, config_path='../configs', config_name='preprocessing_config')
 def create_dataset(cfg: DictConfig):
     # logging initialization
-    logging.basicConfig(filename="log/"+str(datetime.now())+cfg.logging.filename, format='%(asctime)s %(levelname)-8s %(message)s',
+    logging.basicConfig(filename="log/" + str(datetime.now()) + cfg.logging.filename,
+                        format='%(asctime)s %(levelname)-8s %(message)s',
                         datefmt='%d-%m-%Y %H:%M:%S', level=logging.INFO)
 
     # data paths initialization
     root_dir = cfg.root_dir
     res_dir = cfg.res_dir
-    class_names = cfg.class_names
     data_dir = root_dir + 'files.zip'
     labels = pd.read_csv(root_dir + 'mimic-cxr-2.0.0-chexpert.csv')
 
@@ -29,10 +29,6 @@ def create_dataset(cfg: DictConfig):
 
     # dropping rows with unwanted view position
     df = df[df['ViewPosition'] == cfg.view_position]
-
-    # dropping duplicates for each patient
-    df = df.drop_duplicates(subset=['subject_id'], keep='last')
-    df = df.sort_values(by=['subject_id'])
 
     # merge with tables for patient and label information
     df = pd.merge(df, labels)
@@ -56,41 +52,38 @@ def create_dataset(cfg: DictConfig):
         for filename in tqdm(df['path']):
             # read image
             try:
-                img = Image.open(z.open(filename)).convert('RGB')
+                img = Image.open(z.open(filename)).convert('L')
             except:
                 # drop the row
                 print(filename)
                 df_filtered.drop(df_filtered[df_filtered['path'] == filename].index, inplace=True)
                 # logging
                 logging.info(f"dropped {filename}")
-                continue
-            
-            # cut depending on the size
-            width, height = img.size
-            r_min = max(0, (height - width) / 2)
-            r_max = min(height, (height + width) / 2)
-            c_min = max(0, (width - height) / 2)
-            c_max = min(width, (height + width) / 2)
-            img = img.crop((c_min, r_min, c_max, r_max))
+            else:
+                # cut depending on the size (square crop)
+                width, height = img.size
+                r_min = max(0, (height - width) / 2)  # top
+                r_max = min(height, (height + width) / 2)  # bottom
+                c_min = max(0, (width - height) / 2)  # left
+                c_max = min(width, (height + width) / 2)  # right
+                img = img.crop((c_min, r_min, c_max, r_max))
 
-            # hist equalize and reshape
-            img = img.resize((transResize, transResize))
-            img = ImageOps.equalize(img)
-            # TODO check if we can use RGB
-            img = img.convert('L')
+                # img resize
+                img = img.resize((transResize, transResize))
 
-            # assign
-            img_mat[cnt, :, :] = np.array(img)
+                # histogram equalization
+                img = ImageOps.equalize(img)
 
-            # increment
-            cnt += 1
-    
-  
+                # matrix update
+                img_mat[cnt, :, :] = np.array(img)
+
+                # increment counter
+                cnt += 1
+
     # checking if the directory exist or not. 
-    if not os.path.exists(res_dir): 
-      
+    if not os.path.exists(res_dir):
         # if the directory is not present then create it. 
-        os.makedirs(res_dir) 
+        os.makedirs(res_dir)
 
     # save
     img_mat = img_mat[0:cnt, :, :]
@@ -98,6 +91,10 @@ def create_dataset(cfg: DictConfig):
 
     # save dataframe as csv
     df_filtered.to_csv(res_dir + 'meta_data.csv', index=False)
+
+    # logging
+    logging.info("Process finished")
+    logging.info(cfg)
 
 
 def test_output():
