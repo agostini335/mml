@@ -3,3 +3,5 @@ defaults:
   - dataset: mimic
   - model: resnet18mimic
   - log: log
+  - experiment: experiment
+

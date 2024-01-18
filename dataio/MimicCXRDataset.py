@@ -10,7 +10,8 @@ from torch.utils.data import DataLoader, Dataset
 import torch
 from torchvision import transforms
 from sklearn.model_selection import train_test_split
-
+from sklearn.model_selection import GroupShuffleSplit
+import numpy as np
 
 class CXRDataset(Dataset):
 
@@ -56,6 +57,86 @@ class CXRDataset(Dataset):
 
         return image, label
 
+
+def get_splits_MIMIC_CXR(cfg):
+    """Create train-validation-test split for the MIMIC-CXR dataset"""
+    # TODO check if pl seed is enough
+    np.random.seed(cfg.experiment.seed)
+
+    # assert cfg.datset is mimic cxr
+    assert (cfg.dataset.name == 'MIMIC-CXR')
+
+    if cfg.experiment.splitting_method != 'random':
+        raise NotImplementedError('Only random split is supported at the moment')
+
+    view_pos = cfg.experiment.view_position
+
+    if view_pos != 'PA' and view_pos != 'AP':
+        raise NotImplementedError("view position not implemented")
+
+    # select the correct root_dir based on view position
+    if view_pos == 'PA':
+        root_dir = cfg.dataset.root_dir_PA
+    if view_pos == 'AP':
+        root_dir = cfg.dataset.root_dir_AP
+
+    # load the correct img_mat
+    if view_pos == 'PA' or view_pos == 'AP':
+        img_mat = np.load(os.path.join(root_dir, "files_" + str(cfg.dataset.trans_resize) + ".npy"))
+        df = pd.read_csv(os.path.join(root_dir, "meta_data.csv"))
+    else:
+        raise NotImplementedError("not implemented")
+
+    print('Root dir: ', root_dir)
+    print('Image matrix shape: ', img_mat.shape)
+    print('Number of metadata rows: ', len(df))
+
+    if cfg.experiment.label_policy == 'remove_uncertain':
+        print("Dropping readings with uncertain values in selected class names")
+
+        conditions = [(df[col] == -1) for col in cfg.experiment.target_list]
+        combined_condition = pd.concat(conditions, axis=1).any(axis=1)
+        df.drop(df[combined_condition].index, inplace=True)
+
+        print('Number of filtered metadata rows: ', len(df))
+
+    # patient id split
+    patient_id = sorted(list(set(df['subject_id'])))
+
+    train_idx, test_val_idx = train_test_split(patient_id, train_size=cfg.experiment.train_val_split,
+                                               shuffle=True, random_state=cfg.experiment.seed)
+
+    test_idx, val_idx = train_test_split(test_val_idx, test_size=cfg.experiment.test_val_split,
+                                         shuffle=True, random_state=cfg.experiment.seed)
+
+    print('Number of patients in the training set: ', len(train_idx))
+    print('Number of patients in the val set: ', len(val_idx))
+    print('Number of patients in the test set: ', len(test_idx))
+
+    splits = {'train': train_idx, 'val': val_idx, 'test': test_idx}
+    out_dict = {}
+
+    for split in splits:
+        df_split = df[df['subject_id'].isin(splits[split])]
+        df_split = df_split.sort_values(by=['subject_id']).reset_index()
+
+        split_dicom = df_split['dicom_id']
+        split_label = df_split[cfg.experiment.target_list]
+
+        split_list = sorted(df.index[df['dicom_id'].isin(df_split['dicom_id'])].tolist())
+        split_images = img_mat[split_list, :, :]
+
+        print('Number of images in {} set: '.format(split), len(df_split))
+        out_dict[split] = {'ids': split_list, 'images': split_images, 'labels': split_label, 'dicom_ids': split_dicom}
+
+    return out_dict['train'], out_dict['val'], out_dict['test']
+
+
+
+
+'''
+todo refactoring
+TO REMOVE
 
 
 @hydra.main(version_base=None, config_path='../configs', config_name='dataset_config.yaml')
@@ -115,45 +196,4 @@ def train_test_split_CXR(cfg: DictConfig):
 
     return out_dict['train'], out_dict['val'], out_dict['test']
 
-
-'''
-def get_CXR_dataloaders(dataset, root_dir, train_val_split=0.6, test_val_split=0.5, seed=42):
-    """Returns a dictionary of data loaders for the MIMIC-CXR dataset, for the training, validation, and test sets."""
-
-    train_list, val_list, test_list, train_label, val_label, test_label, \
-        train_imgs, val_imgs, test_imgs = \
-        train_test_split_CXR(dataset=dataset, root_dir=root_dir, train_val_split=train_val_split,
-                             test_val_split=test_val_split, seed=seed)
-
-    # Transformations
-    transResize = 224
-    transformList = []
-    transformList.append(transforms.RandomAffine(degrees=(0, 5), translate=(0.05, 0.05), shear=(5)))
-    transformList.append(transforms.RandomHorizontalFlip())
-    transformList.append(transforms.Resize(size=transResize))
-    transformList.append(transforms.ToTensor())
-    transformList.append(transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))
-    train_transform = transforms.Compose(transformList)
-
-    transformList = []
-    transformList.append(transforms.Resize(transResize))
-    transformList.append(transforms.ToTensor())
-    transformList.append(transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))
-    test_transform = transforms.Compose(transformList)
-
-    # Datasets
-    image_datasets = {'train': ChestXRay_mimic_DatasetGenerator(imgs=train_imgs,
-                                                                img_list=train_list,
-                                                                label_list=train_label,
-                                                                transform=train_transform),
-                      'val': ChestXRay_mimic_DatasetGenerator(imgs=val_imgs,
-                                                              img_list=val_list,
-                                                              label_list=val_label,
-                                                              transform=test_transform),
-                      'test': ChestXRay_mimic_DatasetGenerator(imgs=test_imgs,
-                                                               img_list=test_list,
-                                                               label_list=test_label,
-                                                               transform=test_transform)}
-
-    return image_datasets['train'], image_datasets['val'], image_datasets['test']
 '''

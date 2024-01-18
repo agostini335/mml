@@ -1,22 +1,47 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from omegaconf import MISSING
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional
 
 
 @dataclass
 class DatasetConfig:
     name: str = "MISSING"
-    root_dir: str = "/MISSING"
+    root_dir: str = "MISSING"
     # tasks
     tasks: List[str] = MISSING
-
     # number of workers for data loaders
     num_workers: int = 8
 
+
 @dataclass
 class MIMICDatasetConfig(DatasetConfig):
-    name: str = "MIMIC"
-    root_dir: str = "PUT DATA DIR MIMIC HERE"
+    name: str = "MIMIC-CXR"
+    root_dir_PA: str = "/Users/ago/PycharmProjects/mml/data/PA/mimic-cxr-preprocessed-16012024"
+    root_dir_AP: str = "/Users/ago/PycharmProjects/mml/data/AP/mimic-cxr-preprocessed-17012024"
+    trans_resize: int = 224
+    augmentation: str = "imagenet_style"
+
+
+@dataclass
+class ExperimentConfig:
+    # task not used at the moment
+    task: str = "binary_classification"
+    # experiment name
+    name: str = "MISSING"
+    # target columns
+    target_list: List[str] = field(default_factory=lambda: ["Pneumonia"])
+    # labeling policy
+    label_policy: str = "remove_uncertain"
+    # viewPosition
+    view_position: str = "PA"
+    # splitting method
+    splitting_method: str = "random"
+    # splitting seed
+    seed: int = 42
+    # train val split ratio
+    train_val_split: float = 0.6
+    # test val split ratio
+    test_val_split: float = 0.5
 
 @dataclass
 class ModelConfig:
@@ -28,7 +53,8 @@ class ModelConfig:
     # general
     batch_size: int = 128
     epochs: int = 10
-    lr: float = 0.001
+    initial_lr: float = 0.001
+
 
 @dataclass
 class Resnet18MIMICConfig(ModelConfig):
@@ -37,7 +63,7 @@ class Resnet18MIMICConfig(ModelConfig):
 
 @dataclass
 class MultiModalModelConfig(ModelConfig):
-    #just an exqmple
+    # just an example
     name: str = "MultiModalModel"
 
 
@@ -54,6 +80,7 @@ class LogConfig:
     # logs
     dir_logs: str = "PUT LOG DIR HERE"
 
+
 @dataclass
 class MyConfig:
     # Dataset Config
@@ -62,3 +89,5 @@ class MyConfig:
     model: ModelConfig = MISSING
     # logger
     log: LogConfig = MISSING
+    # experiment
+    experiment: ExperimentConfig = MISSING
