@@ -7,8 +7,6 @@ from typing import List, Dict, Optional
 class DatasetConfig:
     name: str = "MISSING"
     root_dir: str = "MISSING"
-    # tasks
-    tasks: List[str] = MISSING
     # number of workers for data loaders
     num_workers: int = 8
 
@@ -27,7 +25,7 @@ class ExperimentConfig:
     # task not used at the moment
     task: str = "binary_classification"
     # experiment name
-    name: str = "MISSING"
+    name: str = "experiment"
     # target columns
     target_list: List[str] = field(default_factory=lambda: ["Pneumonia"])
     # labeling policy
@@ -53,7 +51,7 @@ class ModelConfig:
     # general
     batch_size: int = 128
     epochs: int = 10
-    initial_lr: float = 0.001
+    initial_lr: float = 0.0001
 
 
 @dataclass
@@ -75,10 +73,10 @@ class LogConfig:
     wandb_run_name: str = "mml"
     wandb_project_name: str = "mml"
     wandb_log_freq: int = 50
-    wandb_offline: bool = False
+    wandb_offline: bool = True
 
     # logs
-    dir_logs: str = "PUT LOG DIR HERE"
+    dir_logs: str = "/Users/ago/PycharmProjects/mml/logs"
 
 
 @dataclass

@@ -61,22 +61,36 @@ def get_model(cfg):
 def run_experiment(cfg: MyConfig):
     print(OmegaConf.to_yaml(cfg))
     train_dataloader, test_dataloader, val_dataloader = create_dataloaders(cfg)
-    model = get_model(cfg)
 
-    # Setting device on GPU if available, else CPU
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    wandb.init(
-        project="mimic-mml",
-        group="experiment_1",
-        job_type='new_config',
-        mode="online",
+    ########
+    # train the model
+    checkpoint_callback = ModelCheckpoint(
+        dirpath=cfg.log.dir_logs,
+        #monitor=cfg.experiment.checkpoint_metric,
+        #mode="min",
+        save_last=True,
     )
-    project_name = 'Resnet18_mimic'
-    wandb_logger = WandbLogger(project=project_name, log_model="all")
-    wandb_logger.watch(model, log="all")
-    trainer = pl.Trainer(max_epochs=cfg.model.epochs, logger=wandb_logger)
-    trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=test_dataloader)
+    wandb_logger = WandbLogger(
+        name=cfg.log.wandb_run_name,
+        config=OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True),
+        project=cfg.log.wandb_project_name,
+        group=cfg.log.wandb_group,
+        offline=cfg.log.wandb_offline,
+        entity=cfg.log.wandb_entity,
+        save_dir=cfg.log.dir_logs,
+    )
+    trainer = pl.Trainer(
+        max_epochs=cfg.model.epochs,
+        devices=1,
+        accelerator="gpu" if cfg.model.device == "cuda" else cfg.model.device,
+        logger=wandb_logger,
+        check_val_every_n_epoch=1,
+        deterministic=True,
+        callbacks=[checkpoint_callback],
+    )
+
+    ########
+    trainer.fit(get_model(cfg), train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
     wandb.finish()
 
 
