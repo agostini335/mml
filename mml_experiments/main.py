@@ -9,7 +9,6 @@ from torch.utils.data import DataLoader
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from MyConfig import MyConfig
-from hydra.core.config_store import ConfigStore
 from cs_manager import set_cs
 from dataio.MimicCXRDataset import get_splits_MIMIC_CXR, CXRDataset
 import torch
@@ -44,7 +43,7 @@ def create_dataloaders(cfg):
 
         test_dataloader = DataLoader(test_dataset, batch_size=cfg.model.batch_size, shuffle=False)
 
-        val_dataloader = DataLoader(test_dataset, batch_size=cfg.model.batch_size, shuffle=False)
+        val_dataloader = DataLoader(val_dataset, batch_size=cfg.model.batch_size, shuffle=False)
 
         return train_dataloader, test_dataloader, val_dataloader
     else:
@@ -53,7 +52,7 @@ def create_dataloaders(cfg):
 
 def get_model(cfg):
     if cfg.model.name == 'resnet18mimic':
-        model = ResnetMimic()
+        model = ResnetMimic(cfg)
         return model
 
 
@@ -61,13 +60,12 @@ def get_model(cfg):
 def run_experiment(cfg: MyConfig):
     print(OmegaConf.to_yaml(cfg))
     train_dataloader, test_dataloader, val_dataloader = create_dataloaders(cfg)
+    model = get_model(cfg)
 
-    ########
-    # train the model
     checkpoint_callback = ModelCheckpoint(
         dirpath=cfg.log.dir_logs,
-        #monitor=cfg.experiment.checkpoint_metric,
-        #mode="min",
+        monitor=cfg.experiment.checkpoint_metric,
+        mode=cfg.experiment.checkpoint_mode,
         save_last=True,
     )
     wandb_logger = WandbLogger(
@@ -89,12 +87,8 @@ def run_experiment(cfg: MyConfig):
         callbacks=[checkpoint_callback],
     )
 
-    ########
-    trainer.fit(get_model(cfg), train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
-    wandb.finish()
+    trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
 
 if __name__ == "__main__":
     run_experiment()
-
-

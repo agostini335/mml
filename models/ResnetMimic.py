@@ -7,10 +7,11 @@ from lightning.pytorch.loggers import WandbLogger
 from sklearn.metrics import roc_auc_score
 
 
+# TODO implement cfg
 class ResnetMimic(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, cfg):
         super().__init__()
-        self.lr = 0.0000005
+        self.lr = cfg.model.initial_lr
         self.pretrained = False
         self.model = resnet18(pretrained=self.pretrained)
         self.model.fc = nn.Linear(512, out_features=1, bias=True)

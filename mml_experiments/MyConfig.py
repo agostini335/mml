@@ -40,6 +40,10 @@ class ExperimentConfig:
     train_val_split: float = 0.6
     # test val split ratio
     test_val_split: float = 0.5
+    # checkpoint metric
+    checkpoint_metric: str = "val_auc"
+    # checkpoint mode
+    checkpoint_mode: str = "max"
 
 @dataclass
 class ModelConfig:
@@ -68,7 +72,7 @@ class MultiModalModelConfig(ModelConfig):
 @dataclass
 class LogConfig:
     # wandb
-    wandb_entity: str = "mml"
+    wandb_entity: str = "aa335"
     wandb_group: str = "mml"
     wandb_run_name: str = "mml"
     wandb_project_name: str = "mml"
