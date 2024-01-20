@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GroupShuffleSplit
 import numpy as np
 
+
 class CXRDataset(Dataset):
 
     def __init__(self, label_name, labels_df, images, transform=None, target_transform=None):
@@ -29,7 +30,6 @@ class CXRDataset(Dataset):
         # create labels based on a binary column
         labels = self.labels_df[self.label_name]
         labels = labels.fillna(0)
-        # assert that values are either 0 or 1
         assert all((labels == 0) | (labels == 1))
         return labels
 
@@ -71,7 +71,7 @@ def get_splits_MIMIC_CXR(cfg):
 
     view_pos = cfg.experiment.view_position
 
-    if view_pos != 'PA' and view_pos != 'AP':
+    if view_pos != 'PA' and view_pos != 'AP' and view_pos != 'FRONTAL':
         raise NotImplementedError("view position not implemented")
 
     # select the correct root_dir based on view position
@@ -79,11 +79,25 @@ def get_splits_MIMIC_CXR(cfg):
         root_dir = cfg.dataset.root_dir_PA
     if view_pos == 'AP':
         root_dir = cfg.dataset.root_dir_AP
+    if view_pos == 'FRONTAL':
+        root_dir_pa = cfg.dataset.root_dir_PA
+        root_dir_ap = cfg.dataset.root_dir_AP
 
     # load the correct img_mat
     if view_pos == 'PA' or view_pos == 'AP':
         img_mat = np.load(os.path.join(root_dir, "files_" + str(cfg.dataset.trans_resize) + ".npy"))
         df = pd.read_csv(os.path.join(root_dir, "meta_data.csv"))
+    elif view_pos == 'FRONTAL':
+        img_mat_pa = np.load(os.path.join(root_dir_pa, "files_" + str(cfg.dataset.trans_resize) + ".npy"))
+        img_mat_ap = np.load(os.path.join(root_dir_ap, "files_" + str(cfg.dataset.trans_resize) + ".npy"))
+        # concatenate the two matrices
+        img_mat = np.concatenate((img_mat_pa, img_mat_ap), axis=0)
+        df_pa = pd.read_csv(os.path.join(root_dir_pa, "meta_data.csv"))
+        df_ap = pd.read_csv(os.path.join(root_dir_ap, "meta_data.csv"))
+        # concatenate the two dataframes TODO Check index
+        df = pd.concat([df_pa, df_ap], axis=0)
+        # rename pa and ap to frontal
+        df['ViewPosition'] = df['ViewPosition'].replace(['PA', 'AP'], 'FRONTAL')
     else:
         raise NotImplementedError("not implemented")
 
@@ -91,7 +105,7 @@ def get_splits_MIMIC_CXR(cfg):
     print('Image matrix shape: ', img_mat.shape)
     print('Number of metadata rows: ', len(df))
 
-    if cfg.experiment.label_policy == 'remove_uncertain':
+    if cfg.experiment.label_policy == 'remove_uncertain':  # TODO check index
         print("Dropping readings with uncertain values in selected class names")
 
         conditions = [(df[col] == -1) for col in cfg.experiment.target_list]
@@ -99,6 +113,10 @@ def get_splits_MIMIC_CXR(cfg):
         df.drop(df[combined_condition].index, inplace=True)
 
         print('Number of filtered metadata rows: ', len(df))
+    if cfg.experiment.label_policy == 'uncertain_to_negative':  # TODO check if this works
+        print("Setting uncertain values to negative in selected class names")
+        for col in cfg.experiment.target_list:
+            df.loc[df[col] == -1] = 0
 
     # patient id split
     patient_id = sorted(list(set(df['subject_id'])))
@@ -130,8 +148,6 @@ def get_splits_MIMIC_CXR(cfg):
         out_dict[split] = {'ids': split_list, 'images': split_images, 'labels': split_label, 'dicom_ids': split_dicom}
 
     return out_dict['train'], out_dict['val'], out_dict['test']
-
-
 
 
 '''

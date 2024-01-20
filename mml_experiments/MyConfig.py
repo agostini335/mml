@@ -29,7 +29,7 @@ class ExperimentConfig:
     # target columns
     target_list: List[str] = field(default_factory=lambda: ["Pneumonia"])
     # labeling policy
-    label_policy: str = "remove_uncertain"
+    label_policy: str = "uncertain_to_negative"
     # viewPosition
     view_position: str = "PA"
     # splitting method
@@ -54,7 +54,7 @@ class ModelConfig:
     device: str = "cuda"
     # general
     batch_size: int = 128
-    epochs: int = 10
+    epochs: int = 150
     initial_lr: float = 0.0001
 
 
