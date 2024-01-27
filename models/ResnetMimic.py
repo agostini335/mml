@@ -1,14 +1,11 @@
 from torchvision.models import resnet18
 import torch
 import torch.nn as nn
-import wandb
 import pytorch_lightning as pl
-from lightning.pytorch.loggers import WandbLogger
 from sklearn.metrics import roc_auc_score
 
 
-# TODO implement cfg
-class ResnetMimic(pl.LightningModule):
+class ResnetMimicBinary(pl.LightningModule):
     def __init__(self, cfg):
         super().__init__()
         self.lr = cfg.model.initial_lr
@@ -40,9 +37,11 @@ class ResnetMimic(pl.LightningModule):
 
         try:
             auc = roc_auc_score(y.cpu(), logits.cpu())
+            self.log("ERROR in VAL AUC", 0)
         except:
             auc = 0
             print("ERROR AUC")
+            self.log("ERROR in VAL AUC", 1)
 
         self.log('val_auc', auc, prog_bar=True, on_step=True, on_epoch=True)
 

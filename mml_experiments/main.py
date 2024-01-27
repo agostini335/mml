@@ -17,7 +17,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 import wandb
 import test
-from models.ResnetMimic import ResnetMimic
+from models.ResnetMimic import ResnetMimicBinary
 
 # set config store
 set_cs()
@@ -52,13 +52,19 @@ def create_dataloaders(cfg):
 
 def get_model(cfg):
     if cfg.model.name == 'resnet18mimic':
-        model = ResnetMimic(cfg)
+        model = ResnetMimicBinary(cfg)
         return model
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def run_experiment(cfg: MyConfig):
     print(OmegaConf.to_yaml(cfg))
+
+    # login to wandb TODO: move to config
+    wandb.login(host="http://wandb-vogtlab.leomed.ethz.ch:49775/")
+
+
+
     train_dataloader, test_dataloader, val_dataloader = create_dataloaders(cfg)
     model = get_model(cfg)
 
