@@ -46,6 +46,9 @@ def create_dataloaders(cfg):
         val_dataloader = DataLoader(val_dataset, batch_size=cfg.model.batch_size, shuffle=False)
 
         return train_dataloader, test_dataloader, val_dataloader
+    elif cfg.dataset.name == 'MIMIC-CXR' and cfg.experiment.task == 'multi_label_classification':
+        #TODO
+        pass
     else:
         raise NotImplementedError
 
@@ -60,11 +63,6 @@ def get_model(cfg):
 def run_experiment(cfg: MyConfig):
     print(OmegaConf.to_yaml(cfg))
 
-    # login to wandb TODO: move to config
-    wandb.login(host="http://wandb-vogtlab.leomed.ethz.ch:49775/")
-
-
-
     train_dataloader, test_dataloader, val_dataloader = create_dataloaders(cfg)
     model = get_model(cfg)
 
@@ -75,7 +73,7 @@ def run_experiment(cfg: MyConfig):
         save_last=True,
     )
     wandb_logger = WandbLogger(
-        name=cfg.log.wandb_run_name,
+        #name=cfg.log.wandb_run_name,
         config=OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True),
         project=cfg.log.wandb_project_name,
         group=cfg.log.wandb_group,
