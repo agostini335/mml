@@ -12,6 +12,7 @@ from torchvision import transforms
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GroupShuffleSplit
 import numpy as np
+from tqdm import tqdm
 
 
 class CXRDataset(Dataset):
@@ -131,7 +132,19 @@ def _get_splits_MIMIC_CXR_frontal(cfg):
             dicom_ids_list.append(split_dicom)
 
         # create a single image matrix
-        image_mat = np.concatenate(images_list, axis=0)
+        #image_mat = np.concatenate(images_list, axis=0)
+        # create a single image matrix concat image_list in an efficient way
+        image_mat = np.zeros(shape=(len(images_list[0]) + len(images_list[1]), images_list[0].shape[1], images_list[0].shape[2]))
+        for i in tqdm(range(len(images_list[0]))):
+            image_mat[i] = images_list[0][i]
+            # delete the image from the list to save memory
+            images_list[0][i] = None
+        for i in tqdm(range(len(images_list[1]))):
+            image_mat[i + len(images_list[0])] = images_list[1][i]
+            # delete the image from the list to save memory
+            images_list[1][i] = None
+
+
 
         # create a single label df
         label_df = pd.concat(labels_list, axis=0)

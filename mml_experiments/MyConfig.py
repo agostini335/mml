@@ -29,7 +29,7 @@ class ExperimentConfig:
     # experiment name
     name: str = "experiment"
     # target columns
-    target_list: List[str] = field(default_factory=lambda: ["Pneumonia"])
+    target_list: List[str] = field(default_factory=lambda: ['Pneumonia'])
     # labeling policy
     label_policy: str = "uncertain_to_negative"
     # viewPosition PA, AP, FRONTAL
@@ -53,7 +53,13 @@ class MultiLabelExperimentConfig(ExperimentConfig):
     # experiment name
     name: str = "experiment"
     # target columns
-    target_list: List[str] = field(default_factory=lambda: ["Pneumonia"])
+    target_list: List[str] = field(default_factory=lambda: ['Atelectasis', 'Cardiomegaly',
+                                                            'Consolidation', 'Edema', 'Enlarged Cardiomediastinum',
+                                                            'Fracture',
+                                                            'Lung Lesion', 'Lung Opacity', 'No Finding',
+                                                            'Pleural Effusion',
+                                                            'Pleural Other', 'Pneumonia', 'Pneumothorax',
+                                                            'Support Devices'])
     # labeling policy
     label_policy: str = "uncertain_to_negative"
     # splitting method
@@ -65,7 +71,7 @@ class MultiLabelExperimentConfig(ExperimentConfig):
 
 @dataclass
 class ModelConfig:
-    # model name (resnet18mimic)
+    # model name
     name: str = MISSING
     # train config
     seed: int = 42
@@ -74,11 +80,9 @@ class ModelConfig:
     batch_size: int = 128
     epochs: int = 150
     initial_lr: float = 0.0001
+    pretrained: bool = True
 
 
-@dataclass
-class Resnet18MIMICConfig(ModelConfig):
-    name: str = "resnet18mimic"
 
 
 @dataclass

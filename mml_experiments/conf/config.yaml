@@ -1,7 +1,7 @@
 defaults:
   - base_config
   - dataset: mimic
-  - model: resnet18mimic
+  - model: model
   - log: log
   - experiment: experiment
 

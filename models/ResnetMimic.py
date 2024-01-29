@@ -1,4 +1,4 @@
-from torchvision.models import resnet18
+from torchvision.models import resnet18, resnet50, ResNet50_Weights, ResNet18_Weights
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
@@ -9,9 +9,23 @@ class ResnetMimicBinary(pl.LightningModule):
     def __init__(self, cfg):
         super().__init__()
         self.lr = cfg.model.initial_lr
-        self.pretrained = False
-        self.model = resnet18(pretrained=self.pretrained)
-        self.model.fc = nn.Linear(512, out_features=1, bias=True)
+        self.pretrained = cfg.model.pretrained
+
+        if cfg.model.name == 'resnet18':
+            if self.pretrained:
+                self.model = resnet18(weights=ResNet18_Weights)
+            else:
+                self.model = resnet18()
+            self.model.fc = nn.Linear(512, out_features=1, bias=True)
+        elif cfg.model.name == 'resnet50':
+            if self.pretrained:
+                self.model = resnet50(weights=ResNet50_Weights)
+            else:
+                self.model = resnet50()
+            self.model.fc = nn.Linear(2048, out_features=1, bias=True)
+        else:
+            raise NotImplementedError
+
         self.loss = nn.BCEWithLogitsLoss()
         print(self.model)
 

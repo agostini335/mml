@@ -3,7 +3,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 
 from MyConfig import MyConfig
-from MyConfig import MIMICDatasetConfig, LogConfig, Resnet18MIMICConfig, DatasetConfig, ModelConfig, \
+from MyConfig import MIMICDatasetConfig, LogConfig, DatasetConfig, ModelConfig, \
     MultiModalModelConfig, ExperimentConfig
 
 
@@ -15,7 +15,7 @@ def set_cs():
     cs.store(group="dataset", name="mimic", node=MIMICDatasetConfig)
 
     # ModelConfig
-    cs.store(group="model", name="resnet18mimic", node=Resnet18MIMICConfig)
+    cs.store(group="model", name="model", node=ModelConfig)
     cs.store(group="model", name="MultiModalModel", node=MultiModalModelConfig)
 
     # LogConfig

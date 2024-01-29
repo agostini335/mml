@@ -47,14 +47,15 @@ def create_dataloaders(cfg):
 
         return train_dataloader, test_dataloader, val_dataloader
     elif cfg.dataset.name == 'MIMIC-CXR' and cfg.experiment.task == 'multi_label_classification':
-        #TODO
-        pass
+        train_dict, test_dict, val_dict = get_splits_MIMIC_CXR(cfg)
+        #ok fino a qua
+        train_transform, test_transform, val_transform = get_transformations(cfg)
     else:
         raise NotImplementedError
 
 
 def get_model(cfg):
-    if cfg.model.name == 'resnet18mimic':
+    if cfg.model.name == 'resnet18' or cfg.model.name == 'resnet50':
         model = ResnetMimicBinary(cfg)
         return model
 
