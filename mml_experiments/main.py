@@ -72,7 +72,6 @@ def create_dataloaders(cfg):
 
 
 def get_model(cfg):
-    cfg.model.name='resnet18'# TODO REMOVE DEBUG ONLY
     if (cfg.model.name == 'resnet18' or cfg.model.name == 'resnet50') and \
             cfg.experiment.task == 'binary_classification':
         model = ResnetMimicBinary(cfg)
@@ -119,3 +118,4 @@ def run_experiment(cfg: MyConfig):
 
 if __name__ == "__main__":
     run_experiment()
+

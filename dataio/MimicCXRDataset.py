@@ -132,11 +132,10 @@ def _get_splits_MIMIC_CXR_frontal(cfg):
                 for col in cfg.experiment.target_list:
                     df.loc[df[col] == -1] = 0
 
-
             # select relevant subjects
             # solo per debug
             if cfg.dataset.reduced_size:
-                df = df.head(5000)
+                df = df.head(20000)
             df_split = df[df['subject_id'].isin(subject_splits[split])]
             df_split = df_split.sort_values(by=['subject_id']).reset_index()
 

@@ -63,7 +63,7 @@ class MultiLabelExperimentConfig(ExperimentConfig):
     # labeling policy
     label_policy: str = "uncertain_to_negative"
     # splitting method
-    splitting_method: str = "original"
+    splitting_method: str = "random"
     # viewPosition
     view_position: str = "FRONTAL"
 
@@ -81,6 +81,8 @@ class ModelConfig:
     epochs: int = 150
     initial_lr: float = 0.0001
     pretrained: bool = True
+    # root dir pretrained
+    root_dir_pretrained: str = "/Users/ago/PycharmProjects/mml/pretrained_weights"
 
 
 
