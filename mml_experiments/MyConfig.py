@@ -39,7 +39,7 @@ class ExperimentConfig:
     # splitting seed
     seed: int = 42
     # train val split ratio, ignored if splitting method is original
-    train_val_split: float = 0.6
+    train_val_split: float = 0.8
     # test val split ratio, ignored if splitting method is original
     test_val_split: float = 0.5
     # checkpoint metric
@@ -51,7 +51,7 @@ class ExperimentConfig:
 class MultiLabelExperimentConfig(ExperimentConfig):
     task: str = "multi_label_classification"
     # experiment name
-    name: str = "experiment"
+    name: str = "multi label experiment"
     # target columns
     target_list: List[str] = field(default_factory=lambda: ['Atelectasis', 'Cardiomegaly',
                                                             'Consolidation', 'Edema', 'Enlarged Cardiomediastinum',
@@ -93,7 +93,7 @@ class MultiModalModelConfig(ModelConfig):
 
 @dataclass
 class LogConfig:
-    # wandb
+    # wandb ?anandrea
     wandb_entity: str = "aa335"
     wandb_group: str = "mml"
     # wandb_run_name: str = "mml"

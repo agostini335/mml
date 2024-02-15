@@ -4,7 +4,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from MyConfig import MyConfig
 from MyConfig import MIMICDatasetConfig, LogConfig, DatasetConfig, ModelConfig, \
-    MultiModalModelConfig, ExperimentConfig
+    MultiModalModelConfig, ExperimentConfig, MultiLabelExperimentConfig
 
 
 def set_cs():
@@ -23,6 +23,7 @@ def set_cs():
 
     # ExperimentConfig
     cs.store(group="experiment", name="experiment", node=ExperimentConfig)
+    cs.store(group="experiment", name="multilabel_experiment", node=MultiLabelExperimentConfig)
 
     # base config
     cs.store(name="base_config", node=MyConfig)

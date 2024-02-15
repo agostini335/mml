@@ -17,7 +17,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 import wandb
 import test
-from models.ResnetMimic import ResnetMimicBinary
+from models.ResnetMimic import ResnetMimicBinary, ResnetMimicMulti
 
 # set config store
 set_cs()
@@ -30,13 +30,13 @@ def create_dataloaders(cfg):
         train_transform, test_transform, val_transform = get_transformations(cfg)
 
         # get datasets
-        train_dataset = CXRDataset(label_name=cfg.experiment.target_list[0], labels_df=train_dict['labels'],
+        train_dataset = CXRDataset(label_names=cfg.experiment.target_list[0], labels_df=train_dict['labels'],
                                    images=train_dict['images'], transform=train_transform)
 
-        test_dataset = CXRDataset(label_name=cfg.experiment.target_list[0], labels_df=test_dict['labels'],
+        test_dataset = CXRDataset(label_names=cfg.experiment.target_list[0], labels_df=test_dict['labels'],
                                   images=test_dict['images'], transform=test_transform)
 
-        val_dataset = CXRDataset(label_name=cfg.experiment.target_list[0], labels_df=val_dict['labels'],
+        val_dataset = CXRDataset(label_names=cfg.experiment.target_list[0], labels_df=val_dict['labels'],
                                  images=val_dict['images'], transform=val_transform)
         # get dataloaders
         train_dataloader = DataLoader(train_dataset, batch_size=cfg.model.batch_size, shuffle=True)
@@ -48,16 +48,38 @@ def create_dataloaders(cfg):
         return train_dataloader, test_dataloader, val_dataloader
     elif cfg.dataset.name == 'MIMIC-CXR' and cfg.experiment.task == 'multi_label_classification':
         train_dict, test_dict, val_dict = get_splits_MIMIC_CXR(cfg)
-        #ok fino a qua
         train_transform, test_transform, val_transform = get_transformations(cfg)
+        # get datasets
+        train_dataset = CXRDataset(label_names=cfg.experiment.target_list, labels_df=train_dict['labels'],
+                                   images=train_dict['images'], transform=train_transform, multi_label=True)
+
+        test_dataset = CXRDataset(label_names=cfg.experiment.target_list, labels_df=test_dict['labels'],
+                                  images=test_dict['images'], transform=test_transform, multi_label=True)
+
+        val_dataset = CXRDataset(label_names=cfg.experiment.target_list, labels_df=val_dict['labels'],
+                                 images=val_dict['images'], transform=val_transform, multi_label=True)
+        # get dataloaders
+        train_dataloader = DataLoader(train_dataset, batch_size=cfg.model.batch_size, shuffle=True)
+
+        test_dataloader = DataLoader(test_dataset, batch_size=cfg.model.batch_size, shuffle=False)
+
+        val_dataloader = DataLoader(val_dataset, batch_size=cfg.model.batch_size, shuffle=False)
+
+        return train_dataloader, test_dataloader, val_dataloader
+
     else:
         raise NotImplementedError
 
 
 def get_model(cfg):
-    if cfg.model.name == 'resnet18' or cfg.model.name == 'resnet50':
+    cfg.model.name='resnet18'# TODO REMOVE DEBUG ONLY
+    if (cfg.model.name == 'resnet18' or cfg.model.name == 'resnet50') and \
+            cfg.experiment.task == 'binary_classification':
         model = ResnetMimicBinary(cfg)
         return model
+    if (cfg.model.name == 'resnet18' or cfg.model.name == 'resnet50') and \
+            cfg.experiment.task == 'multi_label_classification':
+        return ResnetMimicMulti(cfg)
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
@@ -74,7 +96,7 @@ def run_experiment(cfg: MyConfig):
         save_last=True,
     )
     wandb_logger = WandbLogger(
-        #name=cfg.log.wandb_run_name,
+        # name=cfg.log.wandb_run_name,
         config=OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True),
         project=cfg.log.wandb_project_name,
         group=cfg.log.wandb_group,

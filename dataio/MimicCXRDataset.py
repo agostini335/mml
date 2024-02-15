@@ -17,19 +17,19 @@ from tqdm import tqdm
 
 class CXRDataset(Dataset):
 
-    def __init__(self, label_name, labels_df, images, transform=None, target_transform=None):
+    def __init__(self, label_names, labels_df, images, transform=None, target_transform=None, multi_label=False):
         self.labels_df = labels_df
-        self.label_name = label_name
+        self.label_names = label_names
         self.images = images
         self.transform = transform
         self.target_transform = target_transform
+        self.multi_label = multi_label
 
         # create labels
         self.labels = self._create_labels()
 
     def _create_labels(self):
-        # create labels based on a binary column
-        labels = self.labels_df[self.label_name]
+        labels = self.labels_df[self.label_names]
         labels = labels.fillna(0)
         assert all((labels == 0) | (labels == 1))
         return labels
@@ -41,15 +41,20 @@ class CXRDataset(Dataset):
 
         image = Image.fromarray(self.images[idx]).convert('RGB')
 
+
         label_values = self.labels.iloc[idx]
 
-        # TODO CHECK THIS
-        # If it's a single float64 value, convert it to a numpy array
-        if isinstance(label_values, np.float64):
-            label_values = np.array([label_values])
+        if not self.multi_label:
+            # TODO CHECK THIS
+            # If it's a single float64 value, convert it to a numpy array
+            if isinstance(label_values, np.float64):
+                label_values = np.array([label_values])
+                assert(self.multi_label is False)
 
-        # create a torch tensor from the numpy array
-        label = torch.from_numpy(label_values.astype(int)).float()
+            # create a torch tensor from the numpy array
+            label = torch.from_numpy(label_values.astype(int)).float()
+        else:
+            label = torch.tensor(label_values.values.astype(int)).float()
 
         if self.transform:
             image = self.transform(image)
@@ -83,8 +88,26 @@ def _get_splits_MIMIC_CXR_frontal(cfg):
         test_subjects = split_df[split_df['split'] == 'test']['subject_id'].tolist()
 
         subject_splits = {'train': train_subjects, 'val': val_subjects, 'test': test_subjects}
+    elif cfg.experiment.splitting_method == 'random':
+        # pass the seed to the random state
+        # get list of subjects
+        list_of_subjects = set(df_pa['subject_id'].tolist() + df_ap['subject_id'].tolist())
+        list_of_subjects = list(list_of_subjects)
+        print('Number of total subject_ids: ', len(list_of_subjects))
+        # split all -> train - (test, val)
+        train_subjects, test_val_subjects = train_test_split(list_of_subjects, train_size=cfg.experiment.train_val_split,
+                                                   shuffle=True, random_state=cfg.experiment.seed)
+        # split (test, val) -> test - val
+        test_subjects, val_subjects = train_test_split(test_val_subjects, test_size=cfg.experiment.test_val_split,
+                                             shuffle=True, random_state=cfg.experiment.seed)
+        subject_splits = {'train': train_subjects, 'val': val_subjects, 'test': test_subjects}
+
     else:
-        raise NotImplementedError('Only original split is supported at the moment')
+        raise NotImplementedError('Only original and random split is supported at the moment')
+
+    print('Number of patients in the training set: ', len(train_subjects))
+    print('Number of patients in the val set: ', len(val_subjects))
+    print('Number of patients in the test set: ', len(test_subjects))
 
     # DATA SPLIT
     out_dict = {}
@@ -111,7 +134,7 @@ def _get_splits_MIMIC_CXR_frontal(cfg):
 
 
             # select relevant subjects
-            # solo per debug TODO TOGLIERE
+            # solo per debug
             if cfg.dataset.reduced_size:
                 df = df.head(5000)
             df_split = df[df['subject_id'].isin(subject_splits[split])]
