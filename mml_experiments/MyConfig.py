@@ -8,7 +8,7 @@ class DatasetConfig:
     name: str = "MISSING"
     root_dir: str = "MISSING"
     # number of workers for data loaders
-    num_workers: int = 8
+    num_workers: int = 32
 
 
 @dataclass

@@ -29,25 +29,20 @@ for seed in ${seeds[@]}; do
     echo $name
     #srun -c 8 -t 4:00:00 -p gpu --gres=gpu:1 --mem-per-cpu=4096\
     # -c 8 -t 16:00:00 -p gpu --gres=gpu:rtx2080ti:1 --mem=16G --wrap \
-    sbatch -o "${logdir}/outputs/${name}.log" -J $name -x ${exclude[@]} \
-    -c 8 -t 20:00:00 -p gpu --gres=gpu:1 --mem=16G --wrap \
+    sbatch -o "${logdir}/outputs/${name}.log" -J $name  --cpus-per-task=32\
+    -c 8 -t 20:00:00 --partition=dynamic-a100gpu-32cores-240g --wrap \
     "python main.py \
     --config-name=${config_file} \
-    ++epochs=${epochs} \
-    ++seed=${seed} \
-    ++optimizer.lr=${lr} \
-    ++augmentation.s=${aug_s} \
-    ++loss.temperature=${temperature} \
-    ++loss.similarity_metric=${similarity_metric} \
-    ++loss.projection_dim=${proj_dim} \
-    ++loss.use_true_negatives=False \
-    ++eval_every_n_epochs=256 \
-    ++logging.wandb_project_name=${wandb_project_name} \
-    ++logging.logdir=${logdir} \
-    ++logging.wandb_run_name=${name} \
-    ++augmentation.test_time_augmentations=4 \
-    ++dataset.normal_class=${normal_class} \
-    ++dataset.data_path=/cluster/work/vogtlab/Projects/CIFAR10"
+    ++model.epochs=${epochs} \
+    ++model.seed=${seed} \
+    ++experiment.seed=${seed} \
+    ++model.initial_lr=${lr} \
+    ++model.name=${model} \
+    ++dataset.root_dir_PA=/cluster/work/vogtlab/Projects/CIFAR10 \
+    ++dataset.root_dir_AP=/cluster/work/vogtlab/Projects/CIFAR10
+    ++dataset.root_dir_AP=/cluster/work/vogtlab/Projects/CIFAR10\"
+
+
 done
 done
 done

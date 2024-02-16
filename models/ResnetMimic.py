@@ -123,7 +123,7 @@ class ResnetMimicMulti(pl.LightningModule):
         self.val_auc_vec(logits, y.to(torch.int))
         # log auc for each label
         for i, label in enumerate(self.target_list):
-            self.log(f'val_auc_{label}', self.val_auc_vec[i], prog_bar=True, on_step=False, on_epoch=True,
+            self.log(f'val_auc_{label}', self.val_auc_vec[i], prog_bar=False, on_step=False, on_epoch=True,
                      metric_attribute='val_auc_vec')  # TODO check order
 
     def on_train_epoch_end(self):
